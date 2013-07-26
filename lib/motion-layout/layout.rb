@@ -1,5 +1,18 @@
 module Motion
   class Layout
+
+    OPTIONS_SYMBOLS = {
+      left: NSLayoutFormatAlignAllLeft,
+      right: NSLayoutFormatAlignAllRight,
+      top: NSLayoutFormatAlignAllTop,
+      bottom: NSLayoutFormatAlignAllBottom,
+      leading: NSLayoutFormatAlignAllLeading,
+      trailing: NSLayoutFormatAlignAllTrailing,
+      centerx: NSLayoutFormatAlignAllCenterX,
+      centery: NSLayoutFormatAlignAllCenterY,
+      baseline: NSLayoutFormatAlignAllBaseline,
+    }
+
     def initialize(&block)
       @verticals   = []
       @horizontals = []
@@ -21,15 +34,29 @@ module Motion
       @view = view
     end
 
-    def horizontal(horizontal)
-      @horizontals << horizontal
+    def horizontal(horizontal, *options)
+      options = [:centery] if options.empty?
+      @horizontals << [horizontal, resolve_options(options)]
     end
 
-    def vertical(vertical)
-      @verticals << vertical
+    def vertical(vertical, *options)
+      options = [:centerx] if options.empty?
+      @verticals << [vertical, resolve_options(options)]
     end
 
-    private
+  private
+
+    def resolve_opts(opt)
+      opt.inject(0) do |m,x|
+        if x.kind_of?(Numeric)
+          m | x.to_i
+        elsif o = OPTIONS_SYMBOLS[x.to_s.downcase.to_sym]
+          m | o
+        else
+          raise "invalid opt: #{x.to_s.downcase}"
+        end
+  	  end
+    end
 
     def strain
       @subviews.values.each do |subview|
@@ -41,11 +68,11 @@ module Motion
       views = @subviews.merge("superview" => @view)
 
       constraints = []
-      constraints += @verticals.map do |vertical|
-        NSLayoutConstraint.constraintsWithVisualFormat("V:#{vertical}", options:0, metrics:@metrics, views:views)
+      constraints += @verticals.map do |vertical, options|
+        NSLayoutConstraint.constraintsWithVisualFormat("V:#{vertical}", options:options, metrics:@metrics, views:views)
       end
-      constraints += @horizontals.map do |horizontal|
-        NSLayoutConstraint.constraintsWithVisualFormat("H:#{horizontal}", options:0, metrics:@metrics, views:views)
+      constraints += @horizontals.map do |horizontal, options|
+        NSLayoutConstraint.constraintsWithVisualFormat("H:#{horizontal}", options:options, metrics:@metrics, views:views)
       end
 
       @view.addConstraints(constraints.flatten)
