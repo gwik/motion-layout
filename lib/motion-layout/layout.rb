@@ -35,18 +35,16 @@ module Motion
     end
 
     def horizontal(horizontal, *options)
-      options = [:centery] if options.empty?
       @horizontals << [horizontal, resolve_options(options)]
     end
 
     def vertical(vertical, *options)
-      options = [:centerx] if options.empty?
       @verticals << [vertical, resolve_options(options)]
     end
 
   private
 
-    def resolve_opts(opt)
+    def resolve_options(opt)
       opt.inject(0) do |m,x|
         if x.kind_of?(Numeric)
           m | x.to_i
