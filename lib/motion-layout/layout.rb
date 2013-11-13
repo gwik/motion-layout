@@ -65,14 +65,12 @@ module Motion
         @view.addSubview(subview) unless subview.superview
       end
 
-      views = @subviews.merge("superview" => @view)
-
       constraints = []
       constraints += @verticals.map do |vertical, options|
-        NSLayoutConstraint.constraintsWithVisualFormat("V:#{vertical}", options:options, metrics:@metrics, views:views)
+        NSLayoutConstraint.constraintsWithVisualFormat("V:#{vertical}", options:options, metrics:@metrics, views:@subviews)
       end
       constraints += @horizontals.map do |horizontal, options|
-        NSLayoutConstraint.constraintsWithVisualFormat("H:#{horizontal}", options:options, metrics:@metrics, views:views)
+        NSLayoutConstraint.constraintsWithVisualFormat("H:#{horizontal}", options:options, metrics:@metrics, views:@subviews)
       end
 
       @view.addConstraints(constraints.flatten)
