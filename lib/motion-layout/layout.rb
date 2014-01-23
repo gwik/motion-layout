@@ -35,14 +35,24 @@ module Motion
     end
 
     def horizontal(horizontal, *options)
-      @horizontals << [horizontal, resolve_options(options)]
+      kw = extract_keywords!(options)
+      @horizontals << [horizontal, resolve_options(options), kw]
     end
 
     def vertical(vertical, *options)
-      @verticals << [vertical, resolve_options(options)]
+      kw = extract_keywords!(options)
+      @verticals << [vertical, resolve_options(options), kw]
     end
 
   private
+
+    def extract_keywords!(options)
+      if options.last.kind_of?(Hash)
+        options.pop
+      else
+        {}
+      end
+    end
 
     def resolve_options(opt)
       opt.inject(0) do |m,x|
@@ -56,6 +66,14 @@ module Motion
   	  end
     end
 
+    def apply_keywords(kw, constraints)
+      priority = kw[:priority]
+      unless priority.nil?
+        constraints.each{|c| c.priority = priority}
+      end
+      constraints
+    end
+
     def strain
       @subviews.values.each do |subview|
         next if subview == @view
@@ -64,11 +82,13 @@ module Motion
       end
 
       constraints = []
-      constraints += @verticals.map do |vertical, options|
-        NSLayoutConstraint.constraintsWithVisualFormat("V:#{vertical}", options:options, metrics:@metrics, views:@subviews)
+      constraints += @verticals.map do |vertical, options, kw|
+        c = NSLayoutConstraint.constraintsWithVisualFormat("V:#{vertical}", options:options, metrics:@metrics, views:@subviews)
+        apply_keywords(kw, c)
       end
-      constraints += @horizontals.map do |horizontal, options|
-        NSLayoutConstraint.constraintsWithVisualFormat("H:#{horizontal}", options:options, metrics:@metrics, views:@subviews)
+      constraints += @horizontals.map do |horizontal, options, kw|
+        c = NSLayoutConstraint.constraintsWithVisualFormat("H:#{horizontal}", options:options, metrics:@metrics, views:@subviews)
+        apply_keywords(kw, c)
       end
 
       @view.addConstraints(constraints.flatten)
